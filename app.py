@@ -13,7 +13,9 @@ def load_prompts():
         return yaml.safe_load(file)
 
 prompts = load_prompts()
-client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))def translate_sentence(sentence, gender, casual_level):
+client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+
+def translate_sentence(sentence, gender, casual_level):
     try:
         messages = [
             {"role": "system", "content": prompts['translator']['system'].format(gender=gender, casual_level=casual_level)},
