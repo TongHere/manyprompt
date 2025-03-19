@@ -13,17 +13,24 @@ def main():
     if 'messages' not in st.session_state:
         st.session_state.messages = []
 
+    # Display chat history
     for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-
-    if prompt := st.chat_input("What would you like to ask?"):
-        st.session_state.messages.append({"role": "user", "content": prompt})
-
-        with st.chat_message("user"):
-            st.markdown(prompt)
-
-        with st.chat_message("assistant"):
+        if message["role"] == "user":
+            st.markdown(f"**User:** {message['content']}")
+        else:
+            st.markdown(f"**Assistant:** {message['content']}")
+    
+    # Replace chat_input with text_input
+    prompt = st.text_input("What would you like to ask?")
+    
+    if prompt:
+        if 'last_prompt' not in st.session_state or st.session_state.last_prompt != prompt:
+            st.session_state.last_prompt = prompt
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            
+            st.markdown(f"**User:** {prompt}")
+            
+            # Get clarifying question
             clarifying_question = openai.ChatCompletion.create(
                 model="gpt-3.5-turbo",
                 messages=[
@@ -31,12 +38,13 @@ def main():
                     {"role": "user", "content": prompt}
                 ]
             ).choices[0].message.content
-
-            st.markdown(clarifying_question)
+            
+            st.markdown(f"**Assistant:** {clarifying_question}")
             st.session_state.messages.append({"role": "assistant", "content": clarifying_question})
-
+            
+            # Get user clarification
             user_clarification = st.text_input("Please specify your preference:")
-
+            
             if user_clarification:
                 final_response = openai.ChatCompletion.create(
                     model="gpt-3.5-turbo",
@@ -45,8 +53,8 @@ def main():
                         {"role": "user", "content": prompt}
                     ]
                 ).choices[0].message.content
-
-                st.markdown(final_response)
+                
+                st.markdown(f"**Assistant:** {final_response}")
                 st.session_state.messages.append({"role": "assistant", "content": final_response})
 
 if __name__ == '__main__':
