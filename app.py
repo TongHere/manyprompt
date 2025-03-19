@@ -8,10 +8,8 @@ load_dotenv()
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
 # Load prompts from YAML file
-config_path = os.getenv('PROMPTS_CONFIG_PATH', 'prompts.yaml')
-with open(config_path, 'r') as file:
-    prompts = yaml.safe_load(file)
-def translate_sentence(sentence, gender, casual_level):
+with open('prompts.yaml', 'r') as file:
+    prompts = yaml.safe_load(file)def translate_sentence(sentence, gender, casual_level):
     messages = [
         {"role": "system", "content": prompts['translator']['system'].format(gender=gender, casual_level=casual_level)},
         {"role": "user", "content": sentence}
