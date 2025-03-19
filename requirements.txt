@@ -5,12 +5,9 @@ Jinja2==3.1.4
 jinja2-time==0.2.0
 openai==0.27.6
 
-# Use pre-built wheels for problematic packages
-tiktoken>=0.3.3 --only-binary :all:
-# Alternative to faiss-cpu (if you need vector search)
-scikit-learn>=1.0.0
-
-# Other dependencies
+# Required dependencies
+tiktoken>=0.3.3
+altair==4.0.0
 numpy>=1.26.0
 pandas>=2.0.0
 tqdm>=4.66.0
