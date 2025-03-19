@@ -1,16 +1,16 @@
 import streamlit as st
 import openai
 import os
-import yaml
+import pyyaml
 from dotenv import load_dotenv
 
 load_dotenv()
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
 # Load prompts from YAML file
-with open('prompts.yaml', 'r') as file:
+config_path = os.getenv('PROMPTS_CONFIG_PATH', 'prompts.yaml')
+with open(config_path, 'r') as file:
     prompts = yaml.safe_load(file)
-
 def translate_sentence(sentence, gender, casual_level):
     messages = [
         {"role": "system", "content": prompts['translator']['system'].format(gender=gender, casual_level=casual_level)},
