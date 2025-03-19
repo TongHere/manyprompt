@@ -8,7 +8,7 @@ openai.api_key = os.getenv('OPENAI_API_KEY')
 
 def translate_sentence(sentence, gender, casual_level):
     messages = [
-        {"role": "system", "content": f"You are an expert translator. Translate the sentence from English to German and considering the speaker's gender as {gender}. The tone should be {casual_level}."},
+        {"role": "system", "content": f"You are an expert linguist, specializing in the structure, meaning, usage, and evolution of language. With advanced education in linguistics, you possess multilingual proficiency, exceptional analytical and critical thinking skills, cultural sensitivity, and strong communication abilities. Your expertise includes conducting in-depth linguistic research, problem-solving, and effectively using technological tools to analyze linguistic phenomena. Provide thoughtful, detailed, and precise responses, demonstrating linguistic clarity, insight, and cultural awareness in your explanations. Translate the sentence from English to German and considering the speaker's gender as {gender}. The tone should be {casual_level}."},
         {"role": "user", "content": sentence}
     ]
     response = openai.ChatCompletion.create(
@@ -18,7 +18,7 @@ def translate_sentence(sentence, gender, casual_level):
     return response.choices[0].message.content.strip()
 
 def main():
-    st.title("Sentence Translator with LLM")
+    st.title(" Your Translator BFF")
 
     if 'translation' not in st.session_state:
         st.session_state.translation = ""
@@ -34,11 +34,31 @@ def main():
 
     # Step 2: Ask for gender preference
     if st.session_state.step == 'gender':
-        gender = st.radio("Is the speaker male or female?", ('Male', 'Female'))
-        if st.button("Next"):
-            st.session_state.gender = gender
-            st.session_state.step = 'translate'
-            st.experimental_rerun()
+        st.subheader(" Audience Gender")
+        
+        # Display chat-like message from the system
+        with st.chat_message("assistant"):
+            st.write("Is the speaker male or female?")
+        
+        # Create a container for user input
+        user_input_container = st.container()
+        
+        # Add a text input for chat-style interaction
+        with user_input_container:
+            user_response = st.text_input("Your response:", key="gender_response", placeholder="Type 'male' or 'female'...")
+            
+            # Process the response when user submits
+            if user_response.lower() in ['male', 'female']:
+                # Display user's message in chat style
+                with st.chat_message("user"):
+                    st.write(user_response)
+                
+                # Store the gender and move to next step
+                st.session_state.gender = user_response.capitalize()
+                st.session_state.step = 'translate'
+                st.experimental_rerun()
+            elif user_response and user_response.lower() not in ['male', 'female']:
+                st.error("Please type either 'male' or 'female'.")
 
     # Step 3: Perform initial translation (default neutral)
     if st.session_state.step == 'translate':
