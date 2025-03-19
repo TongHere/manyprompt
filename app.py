@@ -1,14 +1,19 @@
 import streamlit as st
 import openai
 import os
+import pyyaml
 from dotenv import load_dotenv
 
 load_dotenv()
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
+# Load prompts from YAML file
+with open('prompts.yaml', 'r') as file:
+    prompts = yaml.safe_load(file)
+
 def translate_sentence(sentence, gender, casual_level):
     messages = [
-        {"role": "system", "content": f"You are an expert linguist, specializing in the structure, meaning, usage, and evolution of language. With advanced education in linguistics, you possess multilingual proficiency, exceptional analytical and critical thinking skills, cultural sensitivity, and strong communication abilities. Your expertise includes conducting in-depth linguistic research, problem-solving, and effectively using technological tools to analyze linguistic phenomena. Provide thoughtful, detailed, and precise responses, demonstrating linguistic clarity, insight, and cultural awareness in your explanations. Translate the sentence from English to German and considering the speaker's gender as {gender}. The tone should be {casual_level}."},
+        {"role": "system", "content": prompts['translator']['system'].format(gender=gender, casual_level=casual_level)},
         {"role": "user", "content": sentence}
     ]
     response = openai.ChatCompletion.create(
@@ -18,7 +23,7 @@ def translate_sentence(sentence, gender, casual_level):
     return response.choices[0].message.content.strip()
 
 def main():
-    st.title(" Your Translator BFF")
+    st.title(prompts['ui']['title'])
 
     if 'translation' not in st.session_state:
         st.session_state.translation = ""
@@ -27,40 +32,33 @@ def main():
 
     # Step 1: User enters the sentence to translate
     if st.session_state.step == 'input':
-        sentence = st.text_input("Enter the sentence you want to translate:")
+        sentence = st.text_input(prompts['ui']['input_prompt'])
         if sentence:
             st.session_state.sentence = sentence
             st.session_state.step = 'gender'
 
     # Step 2: Ask for gender preference
     if st.session_state.step == 'gender':
-        st.subheader("Speaker Gender")
+        st.subheader(prompts['labels']['gender_subheader'])
         
-        # Initialize chat history if it doesn't exist
-        if 'chat_history' not in st.session_state:
-            st.session_state.chat_history = [{"role": "assistant", "content": "Is the speaker male or female?"}]
-        
-        # Display chat history
-        for message in st.session_state.chat_history:
-            if message["role"] == "assistant":
-                st.markdown(f"**Assistant:** {message['content']}")
-            else:
-                st.markdown(f"**You:** {message['content']}")
+        # Display the question
+        st.write(prompts['ui']['gender_question'])
         
         # Add a text input for interaction
-        user_response = st.text_input("Your response:", key="gender_response", placeholder="Type 'male' or 'female'...")
+        user_response = st.text_input("Your response:", key="gender_response", 
+                                     placeholder=prompts['ui']['gender_placeholder'])
         
         # Process the response when user submits
         if user_response.lower() in ['male', 'female']:
-            # Add user message to chat history
-            st.session_state.chat_history.append({"role": "user", "content": user_response})
+            # Display confirmation
+            st.write(f"**You:** {user_response}")
             
             # Store the gender and move to next step
             st.session_state.gender = user_response.capitalize()
             st.session_state.step = 'translate'
             st.experimental_rerun()
         elif user_response and user_response.lower() not in ['male', 'female']:
-            st.error("Please type either 'male' or 'female'.")
+            st.error(prompts['ui']['gender_error'])
 
     # Step 3: Perform initial translation (default neutral)
     if st.session_state.step == 'translate':
@@ -68,64 +66,60 @@ def main():
             st.session_state.sentence, st.session_state.gender, "neutral"
         )
         st.session_state.translation = translation
-        st.markdown(f"**Translation:** {translation}")
+        st.markdown(f"**{prompts['labels']['translation']}** {translation}")
         st.session_state.step = 'casual'
 
     # Step 4: Ask continuously if user wants more casual translation
     if st.session_state.step == 'casual':
         # Display the current translation
-        st.markdown(f"**Translation:** {st.session_state.translation}")
+        st.markdown(f"**{prompts['labels']['translation']}** {st.session_state.translation}")
         
         # Display chat-like message from the system
-        st.write("**Assistant:** Do you want to make the translation more casual?")
+        st.write(f"**Assistant:** {prompts['ui']['casual_question']}")
         
         # Create a container for user input
-        casual_input_container = st.container()
+        casual_response = st.text_input("Your response:", key="casual_response", 
+                                       placeholder=prompts['ui']['casual_placeholder'])
         
-        # Add a text input for chat-style interaction
-        with casual_input_container:
-            casual_response = st.text_input("Your response:", key="casual_response", 
-                                           placeholder="Type 'yes' or 'no'...")
+        # Process the response when user submits
+        if casual_response.lower() in ['yes', 'y']:
+            # Display user's message in chat style
+            st.write(f"**You:** {casual_response}")
             
-            # Process the response when user submits
-            if casual_response.lower() in ['yes', 'y']:
-                # Display user's message in chat style
-                st.write(f"**You:** {casual_response}")
+            # Generate more casual translation
+            translation = translate_sentence(
+                st.session_state.sentence, st.session_state.gender, "more casual"
+            )
+            st.session_state.translation = translation
+            st.markdown(f"**{prompts['labels']['casual_translation']}** {translation}")
+            
+            # Ask if user wants to translate another sentence
+            st.write(f"**Assistant:** {prompts['ui']['another_question']}")
+            another_response = st.text_input("Your response:", key="another_response", 
+                                           placeholder=prompts['ui']['another_placeholder'])
+            
+            if another_response.lower() in ['yes', 'y']:
+                st.session_state.clear()
+                st.experimental_rerun()
                 
-                # Generate more casual translation
-                translation = translate_sentence(
-                    st.session_state.sentence, st.session_state.gender, "more casual"
-                )
-                st.session_state.translation = translation
-                st.markdown(f"**Casual Translation:** {translation}")
+        elif casual_response.lower() in ['no', 'n']:
+            # Display user's message in chat style
+            st.write(f"**You:** {casual_response}")
+            
+            # Display final translation
+            st.markdown(f"**{prompts['labels']['final_translation']}** {st.session_state.translation}")
+            
+            # Ask if user wants to translate another sentence
+            st.write(f"**Assistant:** {prompts['ui']['another_question']}")
+            another_response = st.text_input("Your response:", key="another_response", 
+                                           placeholder=prompts['ui']['another_placeholder'])
+            
+            if another_response.lower() in ['yes', 'y']:
+                st.session_state.clear()
+                st.experimental_rerun()
                 
-                # Ask if user wants to translate another sentence
-                st.write("**Assistant:** Would you like to translate another sentence?")
-                another_response = st.text_input("Your response:", key="another_response", 
-                                               placeholder="Type 'yes' or 'no'...")
-                
-                if another_response.lower() in ['yes', 'y']:
-                    st.session_state.clear()
-                    st.experimental_rerun()
-                    
-            elif casual_response.lower() in ['no', 'n']:
-                # Display user's message in chat style
-                st.write(f"**You:** {casual_response}")
-                
-                # Display final translation
-                st.markdown(f"**Final Translation:** {st.session_state.translation}")
-                
-                # Ask if user wants to translate another sentence
-                st.write("**Assistant:** Would you like to translate another sentence?")
-                another_response = st.text_input("Your response:", key="another_response", 
-                                               placeholder="Type 'yes' or 'no'...")
-                
-                if another_response.lower() in ['yes', 'y']:
-                    st.session_state.clear()
-                    st.experimental_rerun()
-                    
-            elif casual_response and casual_response.lower() not in ['yes', 'y', 'no', 'n']:
-                st.error("Please type either 'yes' or 'no'.")
+        elif casual_response and casual_response.lower() not in ['yes', 'y', 'no', 'n']:
+            st.error(prompts['ui']['casual_error'])
 
 if __name__ == '__main__':
     main()
