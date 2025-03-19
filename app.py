@@ -8,7 +8,7 @@ openai.api_key = os.getenv('OPENAI_API_KEY')
 
 def translate_sentence(sentence, gender, casual_level):
     messages = [
-        {"role": "system", "content": f"You are an expert translator. Translate the sentence considering the speaker's gender as {gender}. The tone should be {casual_level}."},
+        {"role": "system", "content": f"You are an expert translator. Translate the sentence from English to German and considering the speaker's gender as {gender}. The tone should be {casual_level}."},
         {"role": "user", "content": sentence}
     ]
     response = openai.ChatCompletion.create(
