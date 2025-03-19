@@ -6,20 +6,27 @@ from dotenv import load_dotenv
 
 load_dotenv()
 openai.api_key = os.getenv('OPENAI_API_KEY')
+    # Load prompts from YAML file - do this once at startup
+    @st.cache_resource
+    def load_prompts():
+        with open('prompts.yaml', 'r') as file:
+            return yaml.safe_load(file)
 
-# Load prompts from YAML file
-with open('prompts.yaml', 'r') as file:
-    prompts = yaml.safe_load(file)def translate_sentence(sentence, gender, casual_level):
-    messages = [
-        {"role": "system", "content": prompts['translator']['system'].format(gender=gender, casual_level=casual_level)},
-        {"role": "user", "content": sentence}
-    ]
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=messages
-    )
-    return response.choices[0].message.content.strip()
-
+    prompts = load_prompts()
+def translate_sentence(sentence, gender, casual_level):
+    try:
+        messages = [
+            {"role": "system", "content": prompts['translator']['system'].format(gender=gender, casual_level=casual_level)},
+            {"role": "user", "content": sentence}
+        ]
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=messages
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        st.error(f"Translation error: {str(e)}")
+        return None
 def main():
     st.title(prompts['ui']['title'])
 
@@ -120,4 +127,22 @@ def main():
             st.error(prompts['ui']['casual_error'])
 
 if __name__ == '__main__':
+    # Add this before processing the sentence
+    if not sentence or sentence.isspace():
+        st.error("Please enter a valid sentence to translate.")
+        return
+
+    def get_user_response(prompt, placeholder, error_message, valid_responses):
+        st.write(f"**Assistant:** {prompt}")
+        user_response = st.text_input("Your response:", key=f"response_{prompt[:10]}", 
+                                     placeholder=placeholder)
+        
+        if user_response.lower() in valid_responses:
+            st.write(f"**You:** {user_response}")
+            return user_response.lower()
+        elif user_response and user_response.lower() not in valid_responses:
+            st.error(error_message)
+            return None
+        return None
+
     main()
