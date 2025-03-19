@@ -34,31 +34,33 @@ def main():
 
     # Step 2: Ask for gender preference
     if st.session_state.step == 'gender':
-        st.subheader(" Audience Gender")
+        st.subheader("Speaker Gender")
         
-        # Display chat-like message from the system
-        with st.chat_message("assistant"):
-            st.write("Is the speaker male or female?")
+        # Initialize chat history if it doesn't exist
+        if 'chat_history' not in st.session_state:
+            st.session_state.chat_history = [{"role": "assistant", "content": "Is the speaker male or female?"}]
         
-        # Create a container for user input
-        user_input_container = st.container()
+        # Display chat history
+        for message in st.session_state.chat_history:
+            if message["role"] == "assistant":
+                st.markdown(f"**Assistant:** {message['content']}")
+            else:
+                st.markdown(f"**You:** {message['content']}")
         
-        # Add a text input for chat-style interaction
-        with user_input_container:
-            user_response = st.text_input("Your response:", key="gender_response", placeholder="Type 'male' or 'female'...")
+        # Add a text input for interaction
+        user_response = st.text_input("Your response:", key="gender_response", placeholder="Type 'male' or 'female'...")
+        
+        # Process the response when user submits
+        if user_response.lower() in ['male', 'female']:
+            # Add user message to chat history
+            st.session_state.chat_history.append({"role": "user", "content": user_response})
             
-            # Process the response when user submits
-            if user_response.lower() in ['male', 'female']:
-                # Display user's message in chat style
-                with st.chat_message("user"):
-                    st.write(user_response)
-                
-                # Store the gender and move to next step
-                st.session_state.gender = user_response.capitalize()
-                st.session_state.step = 'translate'
-                st.experimental_rerun()
-            elif user_response and user_response.lower() not in ['male', 'female']:
-                st.error("Please type either 'male' or 'female'.")
+            # Store the gender and move to next step
+            st.session_state.gender = user_response.capitalize()
+            st.session_state.step = 'translate'
+            st.experimental_rerun()
+        elif user_response and user_response.lower() not in ['male', 'female']:
+            st.error("Please type either 'male' or 'female'.")
 
     # Step 3: Perform initial translation (default neutral)
     if st.session_state.step == 'translate':
