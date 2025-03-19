@@ -4,6 +4,7 @@ python-dotenv==1.0.0
 Jinja2==3.1.4
 jinja2-time==0.2.0
 openai==0.27.6
+langchain==0.0.184
 
 # Required dependencies
 tiktoken>=0.3.3
@@ -11,7 +12,7 @@ altair==4.0.0
 numpy>=1.26.0
 pandas>=2.0.0
 tqdm>=4.66.0
-regex>=2024.0.0
+regex>=2023.8.8
 requests>=2.32.0
 PyYAML>=6.0.0
 python-dateutil>=2.9.0
