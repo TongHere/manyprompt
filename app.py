@@ -1,7 +1,7 @@
 import streamlit as st
 import openai
 import os
-import pyyaml
+import yaml
 from dotenv import load_dotenv
 
 load_dotenv()
