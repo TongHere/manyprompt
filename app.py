@@ -73,20 +73,59 @@ def main():
 
     # Step 4: Ask continuously if user wants more casual translation
     if st.session_state.step == 'casual':
-        more_casual = st.radio(
-            "Do you want to make the translation more casual?", ('Yes', 'No')
-        )
-        if more_casual == 'Yes':
-            translation = translate_sentence(
-                st.session_state.sentence, st.session_state.gender, "more casual"
-            )
-            st.session_state.translation = translation
-            st.markdown(f"**Casual Translation:** {translation}")
-        else:
-            st.markdown(f"**Final Translation:** {st.session_state.translation}")
-            if st.button("Translate Another Sentence"):
-                st.session_state.clear()
-                st.experimental_rerun()
+        # Display the current translation
+        st.markdown(f"**Translation:** {st.session_state.translation}")
+        
+        # Display chat-like message from the system
+        st.write("**Assistant:** Do you want to make the translation more casual?")
+        
+        # Create a container for user input
+        casual_input_container = st.container()
+        
+        # Add a text input for chat-style interaction
+        with casual_input_container:
+            casual_response = st.text_input("Your response:", key="casual_response", 
+                                           placeholder="Type 'yes' or 'no'...")
+            
+            # Process the response when user submits
+            if casual_response.lower() in ['yes', 'y']:
+                # Display user's message in chat style
+                st.write(f"**You:** {casual_response}")
+                
+                # Generate more casual translation
+                translation = translate_sentence(
+                    st.session_state.sentence, st.session_state.gender, "more casual"
+                )
+                st.session_state.translation = translation
+                st.markdown(f"**Casual Translation:** {translation}")
+                
+                # Ask if user wants to translate another sentence
+                st.write("**Assistant:** Would you like to translate another sentence?")
+                another_response = st.text_input("Your response:", key="another_response", 
+                                               placeholder="Type 'yes' or 'no'...")
+                
+                if another_response.lower() in ['yes', 'y']:
+                    st.session_state.clear()
+                    st.experimental_rerun()
+                    
+            elif casual_response.lower() in ['no', 'n']:
+                # Display user's message in chat style
+                st.write(f"**You:** {casual_response}")
+                
+                # Display final translation
+                st.markdown(f"**Final Translation:** {st.session_state.translation}")
+                
+                # Ask if user wants to translate another sentence
+                st.write("**Assistant:** Would you like to translate another sentence?")
+                another_response = st.text_input("Your response:", key="another_response", 
+                                               placeholder="Type 'yes' or 'no'...")
+                
+                if another_response.lower() in ['yes', 'y']:
+                    st.session_state.clear()
+                    st.experimental_rerun()
+                    
+            elif casual_response and casual_response.lower() not in ['yes', 'y', 'no', 'n']:
+                st.error("Please type either 'yes' or 'no'.")
 
 if __name__ == '__main__':
     main()
